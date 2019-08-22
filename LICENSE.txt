@@ -1,6 +1,7 @@
 MIT License
 
-Copyright (c) 2019 Hyeon-ki,Hong
+Copyright (c) 2012-2017 Ben Croston <ben@croston.org>
+Copyright (c) 2019 Hyeonki Hong <hhk7734@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
