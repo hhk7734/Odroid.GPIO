@@ -61,6 +61,13 @@ def _warning_unsupported_func():
 
 
 def setmode(mode):
+    '''
+    Set up numbering mode to use for channels.
+    BOARD    - Use Raspberry Pi board numbers.
+    BCM      - Use SOC GPIO 00..nn numbers.
+    SOC      - Use SOC GPIO 00..nn numbers.
+    WIRINGPI - Use wiringPi pin numbers.
+    '''
     global _gpio_mode
 
     # if _gpio_mode and mode != _gpio_mode:
@@ -80,10 +87,21 @@ def setmode(mode):
 
 
 def getmode():
+    '''
+    Get numbering mode used for channel numbers.
+    Returns BOARD, BCM, SOC, WIRINGPI or None
+    '''
     return _gpio_mode
 
 
 def setup(channels, direction, pull_up_down=PUD_OFF, initial=None):
+    '''
+    Set up a GPIO channel or list of channels with a direction and (optional) pull/up down control.
+    channel        - A pin number depending on which mode is set.
+    direction      - IN or OUT
+    [pull_up_down] - PUD_OFF (default), PUD_UP or PUD_DOWN
+    [initial]      - Initial value for an output channel"
+    '''
     if type(channels) is not list:
         channels = [channels]
 
@@ -108,38 +126,85 @@ def setup(channels, direction, pull_up_down=PUD_OFF, initial=None):
 
 
 def cleanup(channel=None):
+    '''
+    Clean up by resetting all GPIO channels that have been used by this program to INPUT
+            with no pullup/pulldown and no event detection.
+    [channel] - individual channel or list/tuple of channels to clean up.
+            Default - clean every channel that has been used.
+    '''
     _warning_unsupported_func()
 
 
 def input(pin):
+    '''
+    Input from a GPIO channel.  Returns HIGH=1=True or LOW=0=False.
+    channel - A pin number depending on which mode is set.
+    '''
     return digitalRead(pin)
 
 
 def output(pin, status):
+    '''
+    Output to a GPIO channel or list of channels.
+    channel - A pin number depending on which mode is set.
+    value   - 0/1 or False/True or LOW/HIGH.
+    '''
     digitalWrite(pin, status)
 
 
 def event_detected(channel):
+    '''
+    Returns True if an edge has occurred on a given GPIO.
+            You need to enable edge detection using add_event_detect() first.
+    channel - A pin number depending on which mode is set.
+    '''
     _warning_unsupported_func()
 
 
 def add_event_callback(channel, callback):
+    '''
+    Add a callback for an event already defined using add_event_detect().
+    channel      - A pin number depending on which mode is set.
+    callback     - A callback function.
+    '''
     _warning_unsupported_func()
 
 
 def add_event_detect(channel, edge, callback=None, bouncetime=None):
+    '''
+    Enable edge detection events for a particular GPIO channel.
+    channel      - A pin number depending on which mode is set.
+    edge         - RISING, FALLING or BOTH.
+    [callback]   - A callback function for the event (optional).
+    [bouncetime] - Switch bounce timeout in ms for callback.
+    '''
     _warning_unsupported_func()
 
 
 def remove_event_detect(channel):
+    '''
+    Remove edge detection for a particular GPIO channel.
+    channel - A pin number depending on which mode is set.
+    '''
     _warning_unsupported_func()
 
 
 def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
+    '''
+    Wait for an edge.  Returns the channel number or None on timeout.
+    channel      - A pin number depending on which mode is set.
+    edge         - RISING, FALLING or BOTH.
+    [bouncetime] - Time allowed between calls to allow for switchbounce.
+    [timeout]    - Timeout in ms.
+    '''
     _warning_unsupported_func()
 
 
 def gpio_function(channel):
+    '''
+    Return the current GPIO function (IN, OUT, PWM, SERIAL, I2C, SPI).
+    channel - A pin number depending on which mode is set.
+    '''
     _warning_unsupported_func()
 
 
@@ -179,16 +244,37 @@ class PWM(object):
         _warning_unsupported_func()
 
     def start(self, duty_cycle_percent):
+        '''
+        Start software PWM.
+        duty_cycle_percent - the duty cycle (0.0 to 100.0).
+        '''
         _warning_unsupported_func()
 
     def ChangeFrequency(self, frequency_hz):
+        '''
+        Change the frequency.
+        frequency_hz - frequency in Hz (freq > 1.0).
+        '''
         _warning_unsupported_func()
 
     def ChangeDutyCycle(self, duty_cycle_percent):
+        '''
+        Change the duty cycle.
+        duty_cycle_percent - between 0.0 and 100.0.
+        '''
         _warning_unsupported_func()
 
     def stop(self):
+        '''
+        Stop software PWM.
+        '''
         _warning_unsupported_func()
 
     def _reconfigure(self, frequency_hz, duty_cycle_percent, start=False):
         _warning_unsupported_func()
+
+def setwarnings(enable)
+    '''
+    Enable or disable warning messages.
+    '''
+    _warning_unsupported_func()
