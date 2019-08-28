@@ -2,6 +2,7 @@
 MIT License
 
 Copyright (c) 2012-2017 Ben Croston <ben@croston.org>
+Copyright (c) 2019 NVIDIA CORPORATION
 Copyright (c) 2019 Hyeonki Hong <hhk7734@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,9 +25,10 @@ SOFTWARE.
 '''
 
 from Odroid._GPIO import *
+from Odroid.GPIO import gpio_event as event
 import sys
 
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 
 BOARD = 10
 BCM = 11
@@ -54,10 +56,13 @@ _IN_PULL_DOWN = 3
 
 _gpio_mode = None
 
+_gpio_warnings = True
+
 
 def _warning_unsupported_func():
-    func_name = str(sys._getframe(1).f_code.co_name)
-    print("'{}' function is not yet supported.".format(func_name))
+    if _gpio_warnings:
+        func_name = str(sys._getframe(1).f_code.co_name)
+        print("'{}' function is not yet supported.".format(func_name))
 
 
 def setmode(mode):
@@ -135,21 +140,25 @@ def cleanup(channel=None):
     _warning_unsupported_func()
 
 
-def input(pin):
+def input(channel):
     '''
     Input from a GPIO channel.  Returns HIGH=1=True or LOW=0=False.
     channel - A pin number depending on which mode is set.
     '''
-    return digitalRead(pin)
+    return digitalRead(channel)
 
 
-def output(pin, status):
+def output(channels, status):
     '''
     Output to a GPIO channel or list of channels.
     channel - A pin number depending on which mode is set.
     value   - 0/1 or False/True or LOW/HIGH.
     '''
-    digitalWrite(pin, status)
+    if type(channels) is not list:
+        channels = [channels]
+
+    for i in channels:
+        digitalWrite(i, status)
 
 
 def event_detected(channel):
@@ -158,7 +167,9 @@ def event_detected(channel):
             You need to enable edge detection using add_event_detect() first.
     channel - A pin number depending on which mode is set.
     '''
-    _warning_unsupported_func()
+    gpio = getModePinToGpio(channel)
+
+    return event.edge_event_detected(gpio)
 
 
 def add_event_callback(channel, callback):
@@ -167,7 +178,15 @@ def add_event_callback(channel, callback):
     channel      - A pin number depending on which mode is set.
     callback     - A callback function.
     '''
-    _warning_unsupported_func()
+    gpio = getModePinToGpio(channel)
+    if not callable(callback):
+        raise TypeError("Parameter must be callable")
+
+    if not event.gpio_event_added(gpio):
+        raise RuntimeError("Add event detection using add_event_detect first "
+                           "before adding a callback")
+
+    event.add_edge_callback(gpio, lambda: callback(channel))
 
 
 def add_event_detect(channel, edge, callback=None, bouncetime=None):
@@ -178,7 +197,35 @@ def add_event_detect(channel, edge, callback=None, bouncetime=None):
     [callback]   - A callback function for the event (optional).
     [bouncetime] - Switch bounce timeout in ms for callback.
     '''
-    _warning_unsupported_func()
+    gpio = getModePinToGpio(channel)
+
+    if (not callable(callback)) and callback is not None:
+        raise TypeError("Callback Parameter must be callable")
+
+    # if bouncetime is provided, it must be int and greater than 0
+    if bouncetime is not None:
+        if type(bouncetime) != int:
+            raise TypeError("bouncetime must be an integer")
+
+        elif bouncetime < 0:
+            raise ValueError("bouncetime must be an integer greater than 0")
+
+    result = event.add_edge_detect(gpio, edge, bouncetime)
+
+    # result == 1 means a different edge was already added for the channel.
+    # result == 2 means error occurred while adding edge (thread or event poll)
+    if result:
+        error_str = None
+        if result == 1:
+            error_str = "Conflicting edge already enabled for this GPIO " + \
+                        "channel"
+        else:
+            error_str = "Failed to add edge detection"
+
+        raise RuntimeError(error_str)
+
+    if callback is not None:
+        event.add_edge_callback(gpio, lambda: callback(channel))
 
 
 def remove_event_detect(channel):
@@ -186,7 +233,9 @@ def remove_event_detect(channel):
     Remove edge detection for a particular GPIO channel.
     channel - A pin number depending on which mode is set.
     '''
-    _warning_unsupported_func()
+    gpio = getModePinToGpio(channel)
+
+    event.remove_edge_detect(gpio)
 
 
 def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
@@ -197,7 +246,41 @@ def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
     [bouncetime] - Time allowed between calls to allow for switchbounce.
     [timeout]    - Timeout in ms.
     '''
-    _warning_unsupported_func()
+    gpio = getModePinToGpio(channel)
+
+    # if bouncetime is provided, it must be int and greater than 0
+    if bouncetime is not None:
+        if type(bouncetime) != int:
+            raise TypeError("bouncetime must be an integer")
+
+        elif bouncetime < 0:
+            raise ValueError("bouncetime must be an integer greater than 0")
+
+    # if timeout is specified, it must be an int and greater than 0
+    if timeout is not None:
+        if type(timeout) != int:
+            raise TypeError("Timeout must be an integer")
+
+        elif timeout < 0:
+            raise ValueError("Timeout must greater than 0")
+
+    result = event.blocking_wait_for_edge(gpio, edge, bouncetime, timeout)
+
+    # If not error, result == channel. If timeout occurs while waiting,
+    # result == None. If error occurs, result == -1 means channel is
+    # registered for conflicting edge detection, result == -2 means an error
+    # occurred while registering event or polling
+    if not result:
+        return None
+    elif result == -1:
+        raise RuntimeError("Conflicting edge detection event already exists "
+                           "for this GPIO channel")
+
+    elif result == -2:
+        raise RuntimeError("Error waiting for edge")
+
+    else:
+        return channel
 
 
 def gpio_function(channel):
@@ -205,30 +288,6 @@ def gpio_function(channel):
     Return the current GPIO function (IN, OUT, PWM, SERIAL, I2C, SPI).
     channel - A pin number depending on which mode is set.
     '''
-    _warning_unsupported_func()
-
-
-def add_edge_detect(gpio, edge, bouncetime):
-    _warning_unsupported_func()
-
-
-def remove_edge_detect(gpio):
-    _warning_unsupported_func()
-
-
-def add_edge_callback(gpio, callback):
-    _warning_unsupported_func()
-
-
-def edge_event_detected(gpio):
-    _warning_unsupported_func()
-
-
-def gpio_event_added(gpio):
-    _warning_unsupported_func()
-
-
-def blocking_wait_for_edge(gpio, edge, bouncetime, timeout):
     _warning_unsupported_func()
 
 
@@ -273,8 +332,10 @@ class PWM(object):
     def _reconfigure(self, frequency_hz, duty_cycle_percent, start=False):
         _warning_unsupported_func()
 
-def setwarnings(enable)
+
+def setwarnings(enable):
     '''
     Enable or disable warning messages.
     '''
-    _warning_unsupported_func()
+    global _gpio_warnings
+    _gpio_warnings = bool(enable)

@@ -71,7 +71,7 @@ class build_py_after_ext(build_py):
 
 setup(
     name                            = "Odroid.GPIO",
-    version                         = "0.0.2",
+    version                         = "0.0.3",
     description                     = "A module to control Odroid GPIO channels",
     url                             = "https://github.com/hhk7734/odroid_gpio",
     classifiers                     = classifiers,
