@@ -1,0 +1,5 @@
+Odroid.GPIO (0.1.0) unstable; urgency=medium
+
+  * Bind wiringPi using Pybind11
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Sat, 21 Mar 2020 17:37:21 +0900
