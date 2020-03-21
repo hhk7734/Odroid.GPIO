@@ -1,3 +1,4 @@
 include LICENSE.txt
 include README.md
-include install_requires.sh
+include CHANGELOG
+include c_src/*
