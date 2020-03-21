@@ -1,7 +1,7 @@
 '''
 MIT License
 
-Copyright (c) 2019 Hyeonki Hong <hhk7734@gmail.com>
+Copyright (c) 2019-2020 Hyeonki Hong <hhk7734@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,66 +22,114 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-from setuptools import setup, find_packages, Extension
-from setuptools.command.sdist import sdist
-from setuptools.command.build_py import build_py
-from os import path
-import subprocess
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 import sys
+import setuptools
+from os import path
 
-here = path.abspath(path.dirname(__file__))
-script = path.join(here, "install_requires.sh")
-if subprocess.call(["sudo", "sh", script]) != 0:
-    sys.exit(1)
+BASE_DIR = path.dirname(path.abspath(__file__))
+CHANGELOG_PATH = path.join(BASE_DIR, "CHANGELOG")
 
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: POSIX :: Linux",
-    "Intended Audience :: Developers",
-    "Topic :: Software Development",
-    "Topic :: System :: Hardware",
-]
+
+class get_pybind_include(object):
+    """Helper class to determine the pybind11 include path
+    The purpose of this class is to postpone importing pybind11
+    until it is actually installed, so that the ``get_include()``
+    method can be invoked. """
+
+    def __init__(self, user=False):
+        self.user = user
+
+    def __str__(self):
+        import pybind11
+        return pybind11.get_include(self.user)
+
 
 ext_modules = [
     Extension(
         "Odroid._GPIO",
-        [
-            "wrap/wiringPi.i"
+        sources=["c_src/gpio.cpp"],
+        include_dirs=[
+            # Path to pybind11 headers
+            get_pybind_include(),
+            get_pybind_include(user=True)
         ],
-        libraries = ["wiringPi", "wiringPiDev", "m", "pthread", "rt", "crypt"],
+        language="c++"
     ),
 ]
 
-'''
-for upload
-'''
-class sdist_after_ext(sdist):
-    def run(self):
-        self.run_command("build_ext")
-        return sdist.run(self)
+with open(CHANGELOG_PATH, "r") as f:
+    version = f.readline()
+    version = version.split()
+    version = version[1][1:-1]
 
-'''
-in the distribution when running setup.py bdist or bdist_wheel.
-'''
-class build_py_after_ext(build_py):
-    def run(self):
-        self.run_command("build_ext")
-        return build_py.run(self)
+
+def has_flag(compiler, flagname):
+    """Return a boolean indicating whether a flag name is supported on
+    the specified compiler.
+    """
+    import tempfile
+    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
+        f.write('int main (int argc, char **argv) { return 0; }')
+        try:
+            compiler.compile([f.name], extra_postargs=[flagname])
+        except setuptools.distutils.errors.CompileError:
+            return False
+    return True
+
+
+def cpp_flag(compiler):
+    """Return the -std=c++[11/14/17] compiler flag.
+    The newer version is prefered over c++11 (when it is available).
+    """
+    flags = ['-std=c++17', '-std=c++14', '-std=c++11']
+
+    for flag in flags:
+        if has_flag(compiler, flag):
+            return flag
+
+    raise RuntimeError('Unsupported compiler -- at least C++11 support '
+                       'is needed!')
+
+
+class BuildExt(build_ext):
+    """A custom build extension for adding compiler-specific options."""
+    c_opts = {
+        'msvc': ['/EHsc'],
+        'unix': ["-lwiringPi", "-lm", "-lpthread", "-lrt", "-lcrypt"],
+    }
+    l_opts = {
+        'msvc': [],
+        'unix': ["-lwiringPi", "-lm", "-lpthread", "-lrt", "-lcrypt"],
+    }
+
+    if sys.platform == 'darwin':
+        darwin_opts = ['-stdlib=libc++', '-mmacosx-version-min=10.7']
+        c_opts['unix'] += darwin_opts
+        l_opts['unix'] += darwin_opts
+
+    def build_extensions(self):
+        ct = self.compiler.compiler_type
+        opts = self.c_opts.get(ct, [])
+        link_opts = self.l_opts.get(ct, [])
+        if ct == 'unix':
+            opts.append('-DVERSION_INFO="%s"' %
+                        self.distribution.get_version())
+            opts.append(cpp_flag(self.compiler))
+            if has_flag(self.compiler, '-fvisibility=hidden'):
+                opts.append('-fvisibility=hidden')
+        elif ct == 'msvc':
+            opts.append('/DVERSION_INFO=\\"%s\\"' %
+                        self.distribution.get_version())
+        for ext in self.extensions:
+            ext.extra_compile_args = opts
+            ext.extra_link_args = link_opts
+        build_ext.build_extensions(self)
+
 
 setup(
-    name                            = "Odroid.GPIO",
-    version                         = "0.0.3",
-    description                     = "A module to control Odroid GPIO channels",
-    url                             = "https://github.com/hhk7734/odroid_gpio",
-    classifiers                     = classifiers,
-    keywords                        = ["Odroid", "GPIO"],
-    package_dir                     = {"": "src"},
-    packages                        = find_packages('src'),
-    license                         = "MIT",
-    ext_modules                     = ext_modules,
-    project_urls                    = {
-                                        'Source': 'https://github.com/hhk7734/odroid_gpio',
-                                    },
-    cmdclass                        = {'sdist' : sdist_after_ext},
+    version=version,
+    ext_modules=ext_modules,
+    cmdclass={'build_ext': BuildExt},
 )

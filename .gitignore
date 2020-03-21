@@ -1,6 +1,5 @@
 dist/
 build/
 .vscode/
-src/Odroid.GPIO.egg-info/
-wrap/GPIO.py
-wrap/wiringPi_wrap.c
+py_src/Odroid.GPIO.egg-info
+tmp/

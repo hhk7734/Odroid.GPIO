@@ -28,8 +28,6 @@ from Odroid._GPIO import *
 from Odroid.GPIO import gpio_event as event
 import sys
 
-VERSION = "0.0.3"
-
 BOARD = 10
 BCM = 11
 SOC = 100
