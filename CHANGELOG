@@ -1,3 +1,9 @@
+Odroid.GPIO (0.1.2) unstable; urgency=medium
+
+  * Update MANIFEST.in
+
+ -- Hyeonki Hong <hhk7734@gmail.com>  Sat, 21 Mar 2020 18:37:40 +0900
+
 Odroid.GPIO (0.1.1) unstable; urgency=medium
 
   * Correct package name
