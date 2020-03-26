@@ -7,8 +7,12 @@
 ## Installation
 
 ```shell
-sudo apt update \
-&& sudo apt install -y python3 python3-dev python3-pip \
+sudo add-apt-repository -y ppa:hardkernel/ppa \
+&& sudo apt update
+```
+
+```shell
+sudo apt install -y python3 python3-dev python3-pip \
     odroid-wiringpi libwiringpi-dev
 ```
 
