@@ -108,24 +108,23 @@ def setup(channels, direction, pull_up_down=PUD_OFF, initial=None):
     if type(channels) is not list:
         channels = [channels]
 
-    if initial is not None:
-        # todo
-        print(
-            "'initial' parameter in setup() is not yet supported. Set to 'None' or not set.")
-    else:
-        if direction == OUT:
-            for i in channels:
-                pinMode(i, OUT)
-        elif direction == IN:
-            if pull_up_down == PUD_OFF:
-                direction = _IN_PULL_OFF
-            elif pull_up_down == PUD_DOWN:
-                direction = _IN_PULL_DOWN
-            elif pull_up_down == PUD_UP:
-                direction = _IN_PULL_UP
+    if direction == OUT:
+        for i in channels:
+            pinMode(i, OUT)
 
-            for i in channels:
-                pinMode(i, direction)
+        if initial is not None:
+            output(channels, initial)
+            
+    elif direction == IN:
+        if pull_up_down == PUD_OFF:
+            direction = _IN_PULL_OFF
+        elif pull_up_down == PUD_DOWN:
+            direction = _IN_PULL_DOWN
+        elif pull_up_down == PUD_UP:
+            direction = _IN_PULL_UP
+
+        for i in channels:
+            pinMode(i, direction)
 
 
 def cleanup(channel=None):
