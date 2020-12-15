@@ -107,7 +107,7 @@ def setup(channels, direction, pull_up_down=PUD_OFF, initial=None):
     [pull_up_down] - PUD_OFF (default), PUD_UP or PUD_DOWN
     [initial]      - Initial value for an output channel"
     """
-    if type(channels) is not list:
+    if not isinstance(channels, (list, tuple)):
         channels = [channels]
 
     if direction == OUT:
@@ -212,7 +212,7 @@ def add_event_detect(channel, edge, callback=None, bouncetime=None):
 
     # if bouncetime is provided, it must be int and greater than 0
     if bouncetime is not None:
-        if type(bouncetime) != int:
+        if not isinstance(bouncetime, int):
             raise TypeError("bouncetime must be an integer")
 
         elif bouncetime < 0:
@@ -259,7 +259,7 @@ def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
 
     # if bouncetime is provided, it must be int and greater than 0
     if bouncetime is not None:
-        if type(bouncetime) != int:
+        if not isinstance(bouncetime, int):
             raise TypeError("bouncetime must be an integer")
 
         elif bouncetime < 0:
@@ -267,7 +267,7 @@ def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
 
     # if timeout is specified, it must be an int and greater than 0
     if timeout is not None:
-        if type(timeout) != int:
+        if not isinstance(timeout, int):
             raise TypeError("Timeout must be an integer")
 
         elif timeout < 0:
