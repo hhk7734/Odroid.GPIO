@@ -22,21 +22,10 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 import os
-
-# Python2 has module thread. Renamed to _thread in Python3
-try:
-    import thread
-except:
-    import _thread as thread
+import _thread as thread
 
 from select import epoll, EPOLLIN, EPOLLET, EPOLLPRI
 from datetime import datetime
-
-try:
-    InterruptedError()
-except:
-    InterruptedError = IOError
-
 
 # sysfs root
 ROOT = "/sys/class/gpio"

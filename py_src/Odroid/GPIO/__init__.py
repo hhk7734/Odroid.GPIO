@@ -313,7 +313,7 @@ def event_cleanup(gpio=None):
     _warning_unsupported_func()
 
 
-class PWM(object):
+class PWM:
     # pylint: disable=unused-argument, no-self-use
     def __init__(self, channel, frequency_hz):
         _warning_unsupported_func()
