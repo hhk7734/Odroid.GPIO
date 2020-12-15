@@ -1,4 +1,4 @@
-'''
+"""
 MIT License
 
 Copyright (c) 2012-2017 Ben Croston <ben@croston.org>
@@ -22,7 +22,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-'''
+"""
 
 from Odroid._GPIO import *
 from Odroid.GPIO import gpio_event as event
@@ -64,13 +64,13 @@ def _warning_unsupported_func():
 
 
 def setmode(mode):
-    '''
+    """
     Set up numbering mode to use for channels.
     BOARD    - Use Raspberry Pi board numbers.
     BCM      - Use SOC GPIO 00..nn numbers.
     SOC      - Use SOC GPIO 00..nn numbers.
     WIRINGPI - Use wiringPi pin numbers.
-    '''
+    """
     global _gpio_mode
 
     # if _gpio_mode and mode != _gpio_mode:
@@ -82,29 +82,31 @@ def setmode(mode):
         wiringPiSetupPhys()
     elif (mode == BCM) or (mode == SOC):
         wiringPiSetupGpio()
-    elif (mode == WIRINGPI):
+    elif mode == WIRINGPI:
         wiringPiSetup()
     else:
-        print("'mode' parameter in setupmode() was set to unsupported parameter.")
+        print(
+            "'mode' parameter in setupmode() was set to unsupported parameter."
+        )
         sys.exit(1)
 
 
 def getmode():
-    '''
+    """
     Get numbering mode used for channel numbers.
     Returns BOARD, BCM, SOC, WIRINGPI or None
-    '''
+    """
     return _gpio_mode
 
 
 def setup(channels, direction, pull_up_down=PUD_OFF, initial=None):
-    '''
+    """
     Set up a GPIO channel or list of channels with a direction and (optional) pull/up down control.
     channel        - A pin number depending on which mode is set.
     direction      - IN or OUT
     [pull_up_down] - PUD_OFF (default), PUD_UP or PUD_DOWN
     [initial]      - Initial value for an output channel"
-    '''
+    """
     if type(channels) is not list:
         channels = [channels]
 
@@ -114,7 +116,7 @@ def setup(channels, direction, pull_up_down=PUD_OFF, initial=None):
 
         if initial is not None:
             output(channels, initial)
-            
+
     elif direction == IN:
         if pull_up_down == PUD_OFF:
             direction = _IN_PULL_OFF
@@ -128,30 +130,30 @@ def setup(channels, direction, pull_up_down=PUD_OFF, initial=None):
 
 
 def cleanup(channel=None):
-    '''
+    """
     Clean up by resetting all GPIO channels that have been used by this program to INPUT
             with no pullup/pulldown and no event detection.
     [channel] - individual channel or list/tuple of channels to clean up.
             Default - clean every channel that has been used.
-    '''
+    """
     _warning_unsupported_func()
 
 
 def input(channel):
-    '''
+    """
     Input from a GPIO channel.  Returns HIGH=1=True or LOW=0=False.
     channel - A pin number depending on which mode is set.
-    '''
+    """
     return digitalRead(channel)
 
 
 def output(channels, values):
-    '''
+    """
     Output to a GPIO channel or list of channels.
     channels - Pin number or list(pin number) according to the set mode.
     values   - value or list(value).
              - value can be 0/1 or False/True or LOW/HIGH.
-    '''
+    """
     if not isinstance(channels, (list, tuple)):
         channels = [channels]
 
@@ -166,41 +168,43 @@ def output(channels, values):
 
 
 def event_detected(channel):
-    '''
+    """
     Returns True if an edge has occurred on a given GPIO.
             You need to enable edge detection using add_event_detect() first.
     channel - A pin number depending on which mode is set.
-    '''
+    """
     gpio = getModePinToGpio(channel)
 
     return event.edge_event_detected(gpio)
 
 
 def add_event_callback(channel, callback):
-    '''
+    """
     Add a callback for an event already defined using add_event_detect().
     channel      - A pin number depending on which mode is set.
     callback     - A callback function.
-    '''
+    """
     gpio = getModePinToGpio(channel)
     if not callable(callback):
         raise TypeError("Parameter must be callable")
 
     if not event.gpio_event_added(gpio):
-        raise RuntimeError("Add event detection using add_event_detect first "
-                           "before adding a callback")
+        raise RuntimeError(
+            "Add event detection using add_event_detect first "
+            "before adding a callback"
+        )
 
     event.add_edge_callback(gpio, lambda: callback(channel))
 
 
 def add_event_detect(channel, edge, callback=None, bouncetime=None):
-    '''
+    """
     Enable edge detection events for a particular GPIO channel.
     channel      - A pin number depending on which mode is set.
     edge         - RISING, FALLING or BOTH.
     [callback]   - A callback function for the event (optional).
     [bouncetime] - Switch bounce timeout in ms for callback.
-    '''
+    """
     gpio = getModePinToGpio(channel)
 
     if (not callable(callback)) and callback is not None:
@@ -221,8 +225,9 @@ def add_event_detect(channel, edge, callback=None, bouncetime=None):
     if result:
         error_str = None
         if result == 1:
-            error_str = "Conflicting edge already enabled for this GPIO " + \
-                        "channel"
+            error_str = (
+                "Conflicting edge already enabled for this GPIO " + "channel"
+            )
         else:
             error_str = "Failed to add edge detection"
 
@@ -233,23 +238,23 @@ def add_event_detect(channel, edge, callback=None, bouncetime=None):
 
 
 def remove_event_detect(channel):
-    '''
+    """
     Remove edge detection for a particular GPIO channel.
     channel - A pin number depending on which mode is set.
-    '''
+    """
     gpio = getModePinToGpio(channel)
 
     event.remove_edge_detect(gpio)
 
 
 def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
-    '''
+    """
     Wait for an edge.  Returns the channel number or None on timeout.
     channel      - A pin number depending on which mode is set.
     edge         - RISING, FALLING or BOTH.
     [bouncetime] - Time allowed between calls to allow for switchbounce.
     [timeout]    - Timeout in ms.
-    '''
+    """
     gpio = getModePinToGpio(channel)
 
     # if bouncetime is provided, it must be int and greater than 0
@@ -277,8 +282,10 @@ def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
     if not result:
         return None
     elif result == -1:
-        raise RuntimeError("Conflicting edge detection event already exists "
-                           "for this GPIO channel")
+        raise RuntimeError(
+            "Conflicting edge detection event already exists "
+            "for this GPIO channel"
+        )
 
     elif result == -2:
         raise RuntimeError("Error waiting for edge")
@@ -288,10 +295,10 @@ def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
 
 
 def gpio_function(channel):
-    '''
+    """
     Return the current GPIO function (IN, OUT, PWM, SERIAL, I2C, SPI).
     channel - A pin number depending on which mode is set.
-    '''
+    """
     _warning_unsupported_func()
 
 
@@ -307,30 +314,30 @@ class PWM(object):
         _warning_unsupported_func()
 
     def start(self, duty_cycle_percent):
-        '''
+        """
         Start software PWM.
         duty_cycle_percent - the duty cycle (0.0 to 100.0).
-        '''
+        """
         _warning_unsupported_func()
 
     def ChangeFrequency(self, frequency_hz):
-        '''
+        """
         Change the frequency.
         frequency_hz - frequency in Hz (freq > 1.0).
-        '''
+        """
         _warning_unsupported_func()
 
     def ChangeDutyCycle(self, duty_cycle_percent):
-        '''
+        """
         Change the duty cycle.
         duty_cycle_percent - between 0.0 and 100.0.
-        '''
+        """
         _warning_unsupported_func()
 
     def stop(self):
-        '''
+        """
         Stop software PWM.
-        '''
+        """
         _warning_unsupported_func()
 
     def _reconfigure(self, frequency_hz, duty_cycle_percent, start=False):
@@ -338,8 +345,8 @@ class PWM(object):
 
 
 def setwarnings(enable):
-    '''
+    """
     Enable or disable warning messages.
-    '''
+    """
     global _gpio_warnings
     _gpio_warnings = bool(enable)
