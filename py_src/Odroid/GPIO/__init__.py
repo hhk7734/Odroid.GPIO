@@ -145,17 +145,24 @@ def input(channel):
     return digitalRead(channel)
 
 
-def output(channels, status):
+def output(channels, values):
     '''
     Output to a GPIO channel or list of channels.
-    channel - A pin number depending on which mode is set.
-    value   - 0/1 or False/True or LOW/HIGH.
+    channels - Pin number or list(pin number) according to the set mode.
+    values   - value or list(value).
+             - value can be 0/1 or False/True or LOW/HIGH.
     '''
-    if type(channels) is not list:
+    if not isinstance(channels, (list, tuple)):
         channels = [channels]
 
-    for i in channels:
-        digitalWrite(i, status)
+    if isinstance(values, (int, bool)):
+        values = [values for _ in range(len(channels))]
+
+    if len(values) != len(channels):
+        raise RuntimeError("The number of channels and values are different")
+
+    for i, channel in enumerate(channels):
+        digitalWrite(channel, values[i])
 
 
 def event_detected(channel):
