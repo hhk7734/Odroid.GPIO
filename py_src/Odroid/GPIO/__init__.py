@@ -31,8 +31,8 @@ from Odroid.GPIO import gpio_event as event
 
 BOARD = 10
 BCM = 11
-SOC = 100
-WIRINGPI = 101
+SOC = BCM
+WIRINGPI = 12
 
 PUD_OFF = 0
 PUD_DOWN = 1
@@ -65,7 +65,7 @@ def _warning_unsupported_func():
         print("'{}' function is not yet supported.".format(func_name))
 
 
-def setmode(mode):
+def setmode(mode: int) -> None:
     """
     Set up numbering mode to use for channels.
     BOARD    - Use Raspberry Pi board numbers.
@@ -75,22 +75,21 @@ def setmode(mode):
     """
     global _gpio_mode
 
-    # if _gpio_mode and mode != _gpio_mode:
-    #     raise ValueError("A different mode has already been set!")
+    if _gpio_mode is not None and mode != _gpio_mode:
+        raise ValueError("A different mode has already been set!")
 
     _gpio_mode = mode
 
     if mode == BOARD:
         wiringPiSetupPhys()
-    elif mode in (BCM, SOC):
+    elif mode == SOC:
         wiringPiSetupGpio()
     elif mode == WIRINGPI:
         wiringPiSetup()
     else:
-        print(
+        raise ValueError(
             "'mode' parameter in setupmode() was set to unsupported parameter."
         )
-        sys.exit(1)
 
 
 def getmode():
