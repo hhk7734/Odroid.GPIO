@@ -21,6 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+import os
+
 # Python2 has module thread. Renamed to _thread in Python3
 try:
     import thread
@@ -31,11 +33,10 @@ from select import epoll, EPOLLIN, EPOLLET, EPOLLPRI
 from datetime import datetime
 
 try:
-    InterruptedError = InterruptedError
+    InterruptedError()
 except:
     InterruptedError = IOError
 
-import os
 
 # sysfs root
 ROOT = "/sys/class/gpio"
@@ -89,6 +90,7 @@ class _Gpios:
 
 
 def add_edge_detect(gpio, edge, bouncetime):
+    # pylint: disable=missing-function-docstring
     global _epoll_fd_thread
     gpios = None
     res = gpio_event_added(gpio)
@@ -134,6 +136,7 @@ def add_edge_detect(gpio, edge, bouncetime):
 
 
 def remove_edge_detect(gpio):
+    # pylint: disable=missing-function-docstring
     if gpio not in _gpio_event_list:
         return
 
@@ -152,6 +155,7 @@ def remove_edge_detect(gpio):
 
 
 def add_edge_callback(gpio, callback):
+    # pylint: disable=missing-function-docstring
     if gpio not in _gpio_event_list or not _gpio_event_list[gpio].thread_added:
         return
 
@@ -159,6 +163,7 @@ def add_edge_callback(gpio, callback):
 
 
 def edge_event_detected(gpio):
+    # pylint: disable=missing-function-docstring
     retval = False
     if gpio in _gpio_event_list:
         _mutex.acquire()
@@ -168,8 +173,11 @@ def edge_event_detected(gpio):
         _mutex.release()
         return retval
 
+    return retval
+
 
 def gpio_event_added(gpio):
+    # pylint: disable=missing-function-docstring
     if gpio not in _gpio_event_list:
         return NO_EDGE
 
@@ -177,12 +185,14 @@ def gpio_event_added(gpio):
 
 
 def _get_gpio_object(gpio):
+    # pylint: disable=missing-function-docstring
     if gpio not in _gpio_event_list:
         return None
     return _gpio_event_list[gpio]
 
 
 def _set_edge(gpio, edge):
+    # pylint: disable=missing-function-docstring
     edge_path = ROOT + "/gpio%i" % gpio + "/edge"
 
     with open(edge_path, "w") as edge_file:
@@ -190,6 +200,7 @@ def _set_edge(gpio, edge):
 
 
 def _get_gpio_obj_key(fd):
+    # pylint: disable=missing-function-docstring
     for key in _gpio_event_list:
         if _gpio_event_list[key].value_fd == fd:
             return key
@@ -197,6 +208,7 @@ def _get_gpio_obj_key(fd):
 
 
 def _get_gpio_file_object(fileno):
+    # pylint: disable=missing-function-docstring
     for key in _gpio_event_list:
         if _gpio_event_list[key].value_fd.fileno() == fileno:
             return _gpio_event_list[key].value_fd
@@ -204,6 +216,7 @@ def _get_gpio_file_object(fileno):
 
 
 def _poll_thread():
+    # pylint: disable=missing-function-docstring
     global _thread_running
 
     _thread_running = True
@@ -269,6 +282,8 @@ def _poll_thread():
 
 
 def blocking_wait_for_edge(gpio, edge, bouncetime, timeout):
+    # pylint: disable=missing-function-docstring, too-many-return-statements
+    # pylint: disable=too-many-branches, too-many-statements
     global _epoll_fd_blocking
     gpio_obj = None
     finished = False
@@ -343,20 +358,19 @@ def blocking_wait_for_edge(gpio, edge, bouncetime, timeout):
             continue
 
         # debounce input for specified time
-        else:
-            time = datetime.now()
-            time = time.second * 1e6 + time.microsecond
-            if (
-                (gpio_obj.bouncetime is None)
-                or (time - gpio_obj.lastcall > gpio_obj.bouncetime * 1000)
-                or (gpio_obj.lastcall == 0)
-                or (gpio_obj.lastcall > time)
-            ):
-                gpio_obj.lastcall = time
-                _mutex.acquire()
-                _gpio_event_list[gpio] = gpio_obj
-                _mutex.release()
-                finished = True
+        time = datetime.now()
+        time = time.second * 1e6 + time.microsecond
+        if (
+            (gpio_obj.bouncetime is None)
+            or (time - gpio_obj.lastcall > gpio_obj.bouncetime * 1000)
+            or (gpio_obj.lastcall == 0)
+            or (gpio_obj.lastcall > time)
+        ):
+            gpio_obj.lastcall = time
+            _mutex.acquire()
+            _gpio_event_list[gpio] = gpio_obj
+            _mutex.release()
+            finished = True
 
     # check if the event detected was valid
     if res:
@@ -366,15 +380,15 @@ def blocking_wait_for_edge(gpio, edge, bouncetime, timeout):
             _epoll_fd_blocking.unregister(gpio_obj.value_fd)
             print("File object not found after wait for GPIO %s" % gpio)
             return -2
-        else:
-            _mutex.acquire()
-            fd.seek(0)
-            value_str = fd.read().rstrip()
-            _mutex.release()
-            if len(value_str) != 1:
-                _epoll_fd_blocking.unregister(gpio_obj.value_fd)
-                print("Length of value string was not 1 for GPIO %s" % gpio)
-                return -2
+
+        _mutex.acquire()
+        fd.seek(0)
+        value_str = fd.read().rstrip()
+        _mutex.release()
+        if len(value_str) != 1:
+            _epoll_fd_blocking.unregister(gpio_obj.value_fd)
+            print("Length of value string was not 1 for GPIO %s" % gpio)
+            return -2
 
     _epoll_fd_blocking.unregister(gpio_obj.value_fd)
 
@@ -384,6 +398,7 @@ def blocking_wait_for_edge(gpio, edge, bouncetime, timeout):
 
 
 def event_cleanup(gpio=None):
+    # pylint: disable=missing-function-docstring
     global _epoll_fd_thread, _epoll_fd_blocking, _thread_running
 
     _thread_running = False

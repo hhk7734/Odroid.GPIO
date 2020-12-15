@@ -23,10 +23,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+import sys
 
+# pylint: disable=no-name-in-module, import-error, undefined-variable
 from Odroid._GPIO import *
 from Odroid.GPIO import gpio_event as event
-import sys
 
 BOARD = 10
 BCM = 11
@@ -59,6 +60,7 @@ _gpio_warnings = True
 
 def _warning_unsupported_func():
     if _gpio_warnings:
+        # pylint: disable=protected-access
         func_name = str(sys._getframe(1).f_code.co_name)
         print("'{}' function is not yet supported.".format(func_name))
 
@@ -80,7 +82,7 @@ def setmode(mode):
 
     if mode == BOARD:
         wiringPiSetupPhys()
-    elif (mode == BCM) or (mode == SOC):
+    elif mode in (BCM, SOC):
         wiringPiSetupGpio()
     elif mode == WIRINGPI:
         wiringPiSetup()
@@ -101,7 +103,8 @@ def getmode():
 
 def setup(channels, direction, pull_up_down=PUD_OFF, initial=None):
     """
-    Set up a GPIO channel or list of channels with a direction and (optional) pull/up down control.
+    Set up a GPIO channel or list of channels with a direction and
+        (optional) pull/up down control.
     channel        - A pin number depending on which mode is set.
     direction      - IN or OUT
     [pull_up_down] - PUD_OFF (default), PUD_UP or PUD_DOWN
@@ -131,14 +134,16 @@ def setup(channels, direction, pull_up_down=PUD_OFF, initial=None):
 
 def cleanup(channel=None):
     """
-    Clean up by resetting all GPIO channels that have been used by this program to INPUT
-            with no pullup/pulldown and no event detection.
+    Clean up by resetting all GPIO channels that have been used by this program
+        to INPUT with no pullup/pulldown and no event detection.
     [channel] - individual channel or list/tuple of channels to clean up.
             Default - clean every channel that has been used.
     """
+    # pylint: disable=unused-argument
     _warning_unsupported_func()
 
 
+# pylint: disable=redefined-builtin
 def input(channel):
     """
     Input from a GPIO channel.  Returns HIGH=1=True or LOW=0=False.
@@ -215,7 +220,7 @@ def add_event_detect(channel, edge, callback=None, bouncetime=None):
         if not isinstance(bouncetime, int):
             raise TypeError("bouncetime must be an integer")
 
-        elif bouncetime < 0:
+        if bouncetime < 0:
             raise ValueError("bouncetime must be an integer greater than 0")
 
     result = event.add_edge_detect(gpio, edge, bouncetime)
@@ -262,7 +267,7 @@ def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
         if not isinstance(bouncetime, int):
             raise TypeError("bouncetime must be an integer")
 
-        elif bouncetime < 0:
+        if bouncetime < 0:
             raise ValueError("bouncetime must be an integer greater than 0")
 
     # if timeout is specified, it must be an int and greater than 0
@@ -270,7 +275,7 @@ def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
         if not isinstance(timeout, int):
             raise TypeError("Timeout must be an integer")
 
-        elif timeout < 0:
+        if timeout < 0:
             raise ValueError("Timeout must greater than 0")
 
     result = event.blocking_wait_for_edge(gpio, edge, bouncetime, timeout)
@@ -281,17 +286,17 @@ def wait_for_edge(channel, edge, bouncetime=None, timeout=None):
     # occurred while registering event or polling
     if not result:
         return None
-    elif result == -1:
+
+    if result == -1:
         raise RuntimeError(
             "Conflicting edge detection event already exists "
             "for this GPIO channel"
         )
 
-    elif result == -2:
+    if result == -2:
         raise RuntimeError("Error waiting for edge")
 
-    else:
-        return channel
+    return channel
 
 
 def gpio_function(channel):
@@ -299,14 +304,17 @@ def gpio_function(channel):
     Return the current GPIO function (IN, OUT, PWM, SERIAL, I2C, SPI).
     channel - A pin number depending on which mode is set.
     """
+    # pylint: disable=unused-argument
     _warning_unsupported_func()
 
 
 def event_cleanup(gpio=None):
+    # pylint: disable=unused-argument,missing-function-docstring
     _warning_unsupported_func()
 
 
 class PWM(object):
+    # pylint: disable=unused-argument, no-self-use
     def __init__(self, channel, frequency_hz):
         _warning_unsupported_func()
 
