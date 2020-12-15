@@ -29,6 +29,9 @@ import sys
 from Odroid._GPIO import *
 from Odroid.GPIO import gpio_event as event
 
+# For compatibility with RPi.VERSION
+VERSION = "0.7.0"
+
 BOARD = 10
 BCM = 11
 SOC = BCM
